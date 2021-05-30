@@ -1,6 +1,6 @@
 {
     "name": "@eeue56/amddiffyn",
-    "version": "0.0.2",
+    "version": "0.0.3",
     "description": "",
     "main": "index.js",
     "scripts": {
@@ -26,11 +26,13 @@
         "url": "https://github.com/eeue56/amddiffyn/issues"
     },
     "homepage": "https://github.com/eeue56/amddiffyn#readme",
+    "dependencies": {
+        "node-fetch": "^2.6.1"
+    },
     "devDependencies": {
         "@eeue56/bach": "^0.0.2",
         "@types/node": "^15.6.1",
         "@types/node-fetch": "^2.5.10",
-        "node-fetch": "^2.6.1",
         "prettier": "github:eeue56/prettier#feat/spacing-around-square-brackets",
         "typescript": "^4.3.2"
     }
