@@ -4,14 +4,19 @@
     "description": "",
     "main": "index.js",
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1",
+        "build": "tsc -p tsconfig.json",
+        "test": "npx @eeue56/bach",
         "format": "npx prettier --write ."
+    },
+    "bin": {
+        "amddiffyn": "build/amddiffyn.js"
     },
     "repository": {
         "type": "git",
         "url": "git+https://github.com/eeue56/amddiffyn.git"
     },
     "keywords": [
+        "json",
         "typescript",
         "hiraeth"
     ],
@@ -22,6 +27,10 @@
     },
     "homepage": "https://github.com/eeue56/amddiffyn#readme",
     "devDependencies": {
+        "@eeue56/bach": "^0.0.2",
+        "@types/node": "^15.6.1",
+        "@types/node-fetch": "^2.5.10",
+        "node-fetch": "^2.6.1",
         "prettier": "github:eeue56/prettier#feat/spacing-around-square-brackets",
         "typescript": "^4.3.2"
     }

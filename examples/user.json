@@ -1,0 +1,9 @@
+{
+    "name": "noah",
+    "age": 28,
+    "pets": {
+        "frodo": {
+            "alive": false
+        }
+    }
+}
