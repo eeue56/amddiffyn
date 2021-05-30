@@ -1,3 +1,5 @@
+#!/usr/bin/env ts-node
+
 import { readFile } from "fs/promises";
 import fetch from "node-fetch";
 
