@@ -2,6 +2,8 @@
 
 Automatically get a typescript definition for a json blob from a url or a file. A good place to start from when dealing with untyped APIs.
 
+Part of the [Hiraeth](https://github.com/eeue56/hiraeth) collection.
+
 ## Installation
 
 ```
