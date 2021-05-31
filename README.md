@@ -26,4 +26,4 @@ npx @eeue56/amddiffyn https://example.com/user.json
 
 ## Name
 
-Amddiffyn means dictionary. An English speaker may pronounce it as "am-ffith-in".
+Amddiffyn means defend. An English speaker may pronounce it as "am-ffith-in".
