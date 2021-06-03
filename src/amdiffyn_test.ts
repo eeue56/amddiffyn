@@ -1,41 +1,42 @@
 import * as assert from "assert";
-import * as index from "./amddiffyn";
+import {
+    jsonBlobToJsonTypeTree,
+    typeTreeToTypescript,
+    reduceTypes,
+    typeTreeToString,
+    typeTreeIsEqual,
+} from "./amddiffyn";
 
 export function testBoolean() {
     const falseBool = false;
     const trueBool = true;
 
-    const falseBoolParsed = index.jsonBlobToJsonTypeTree(falseBool);
-    const trueBoolParsed = index.jsonBlobToJsonTypeTree(trueBool);
+    const falseBoolParsed = jsonBlobToJsonTypeTree(falseBool);
+    const trueBoolParsed = jsonBlobToJsonTypeTree(trueBool);
 
-    const falseBoolStringTree = index.typeTreeToString(falseBoolParsed);
-    const trueBoolStringTree = index.typeTreeToString(trueBoolParsed);
+    const falseBoolStringTree = typeTreeToString(falseBoolParsed);
+    const trueBoolStringTree = typeTreeToString(trueBoolParsed);
 
     assert.deepStrictEqual(falseBoolStringTree, "boolean");
     assert.deepStrictEqual(trueBoolStringTree, "boolean");
 
-    const falseBoolTypescriptString = index.typeTreeToTypescript(
-        falseBoolParsed
-    );
-    const trueBoolTypeScriptString = index.typeTreeToTypescript(trueBoolParsed);
+    const falseBoolTypescriptString = typeTreeToTypescript(falseBoolParsed);
+    const trueBoolTypeScriptString = typeTreeToTypescript(trueBoolParsed);
 
     assert.deepStrictEqual(falseBoolTypescriptString, "boolean");
     assert.deepStrictEqual(trueBoolTypeScriptString, "boolean");
 
-    const falseIsEqualToItself = index.typeTreeIsEqual(
+    const falseIsEqualToItself = typeTreeIsEqual(
         falseBoolParsed,
         falseBoolParsed
     );
-    const trueIsEqualToItself = index.typeTreeIsEqual(
-        trueBoolParsed,
-        trueBoolParsed
-    );
-    const falseAndTrueAreEqual = index.typeTreeIsEqual(
+    const trueIsEqualToItself = typeTreeIsEqual(trueBoolParsed, trueBoolParsed);
+    const falseAndTrueAreEqual = typeTreeIsEqual(
         falseBoolParsed,
         trueBoolParsed
     );
 
-    const trueAndFalseAndAreEqual = index.typeTreeIsEqual(
+    const trueAndFalseAndAreEqual = typeTreeIsEqual(
         trueBoolParsed,
         falseBoolParsed
     );
@@ -52,21 +53,21 @@ export function testNumber() {
     const ten = 10;
     const minusTen = -10;
 
-    const zeroParsed = index.jsonBlobToJsonTypeTree(zero);
-    const tenParsed = index.jsonBlobToJsonTypeTree(ten);
-    const minusTenParsed = index.jsonBlobToJsonTypeTree(minusTen);
+    const zeroParsed = jsonBlobToJsonTypeTree(zero);
+    const tenParsed = jsonBlobToJsonTypeTree(ten);
+    const minusTenParsed = jsonBlobToJsonTypeTree(minusTen);
 
-    const zeroStringTree = index.typeTreeToString(zeroParsed);
-    const tenStringTree = index.typeTreeToString(tenParsed);
-    const minusTenStringTree = index.typeTreeToString(minusTenParsed);
+    const zeroStringTree = typeTreeToString(zeroParsed);
+    const tenStringTree = typeTreeToString(tenParsed);
+    const minusTenStringTree = typeTreeToString(minusTenParsed);
 
     assert.deepStrictEqual(zeroStringTree, "number");
     assert.deepStrictEqual(tenStringTree, "number");
     assert.deepStrictEqual(minusTenStringTree, "number");
 
-    const zeroTypescriptString = index.typeTreeToTypescript(zeroParsed);
-    const tenTypescriptString = index.typeTreeToTypescript(tenParsed);
-    const minusTenTypescriptString = index.typeTreeToTypescript(minusTenParsed);
+    const zeroTypescriptString = typeTreeToTypescript(zeroParsed);
+    const tenTypescriptString = typeTreeToTypescript(tenParsed);
+    const minusTenTypescriptString = typeTreeToTypescript(minusTenParsed);
 
     assert.deepStrictEqual(zeroTypescriptString, "number");
     assert.deepStrictEqual(tenTypescriptString, "number");
@@ -76,13 +77,13 @@ export function testNumber() {
 export function testNull() {
     const jsonNull = null;
 
-    const jsonNullParsed = index.jsonBlobToJsonTypeTree(jsonNull);
+    const jsonNullParsed = jsonBlobToJsonTypeTree(jsonNull);
 
-    const jsonNullStringTree = index.typeTreeToString(jsonNullParsed);
+    const jsonNullStringTree = typeTreeToString(jsonNullParsed);
 
     assert.deepStrictEqual(jsonNullStringTree, "null");
 
-    const jsonNullTypescriptString = index.typeTreeToTypescript(jsonNullParsed);
+    const jsonNullTypescriptString = typeTreeToTypescript(jsonNullParsed);
 
     assert.deepStrictEqual(jsonNullTypescriptString, "null");
 }
@@ -91,21 +92,17 @@ export function testString() {
     const emptyString = "";
     const shortString = "abcdeflk";
 
-    const emptyStringParsed = index.jsonBlobToJsonTypeTree(emptyString);
-    const shortStringParsed = index.jsonBlobToJsonTypeTree(shortString);
+    const emptyStringParsed = jsonBlobToJsonTypeTree(emptyString);
+    const shortStringParsed = jsonBlobToJsonTypeTree(shortString);
 
-    const emptyStringStringTree = index.typeTreeToString(emptyStringParsed);
-    const shortStringStringTree = index.typeTreeToString(shortStringParsed);
+    const emptyStringStringTree = typeTreeToString(emptyStringParsed);
+    const shortStringStringTree = typeTreeToString(shortStringParsed);
 
     assert.deepStrictEqual(emptyStringStringTree, "string");
     assert.deepStrictEqual(shortStringStringTree, "string");
 
-    const emptyStringTypescriptString = index.typeTreeToTypescript(
-        emptyStringParsed
-    );
-    const shortStringTypescriptString = index.typeTreeToTypescript(
-        shortStringParsed
-    );
+    const emptyStringTypescriptString = typeTreeToTypescript(emptyStringParsed);
+    const shortStringTypescriptString = typeTreeToTypescript(shortStringParsed);
 
     assert.deepStrictEqual(emptyStringTypescriptString, "string");
     assert.deepStrictEqual(shortStringTypescriptString, "string");
@@ -133,11 +130,11 @@ export function testList() {
         { username: "eeue56" },
     ];
 
-    const emptyListParsed = index.jsonBlobToJsonTypeTree(emptyList);
-    const mixedListParsed = index.jsonBlobToJsonTypeTree(mixedList);
+    const emptyListParsed = jsonBlobToJsonTypeTree(emptyList);
+    const mixedListParsed = jsonBlobToJsonTypeTree(mixedList);
 
-    const emptyListStringTree = index.typeTreeToString(emptyListParsed);
-    const mixedListStringTree = index.typeTreeToString(mixedListParsed);
+    const emptyListStringTree = typeTreeToString(emptyListParsed);
+    const mixedListStringTree = typeTreeToString(mixedListParsed);
 
     assert.deepStrictEqual(emptyListStringTree, "list [ ]");
     assert.deepStrictEqual(
@@ -145,12 +142,8 @@ export function testList() {
         "list [ number, string, number, list [ number, number, string, object { name: string } ], object { username: string } ]"
     );
 
-    const emptyListTypescriptString = index.typeTreeToTypescript(
-        emptyListParsed
-    );
-    const mixedListTypescriptString = index.typeTreeToTypescript(
-        mixedListParsed
-    );
+    const emptyListTypescriptString = typeTreeToTypescript(emptyListParsed);
+    const mixedListTypescriptString = typeTreeToTypescript(mixedListParsed);
 
     assert.deepStrictEqual(emptyListTypescriptString, "any[]");
     assert.deepStrictEqual(
@@ -175,11 +168,11 @@ export function testObject() {
         },
     };
 
-    const emptyObjectParsed = index.jsonBlobToJsonTypeTree(emptyObject);
-    const mixedObjectParsed = index.jsonBlobToJsonTypeTree(mixedObject);
+    const emptyObjectParsed = jsonBlobToJsonTypeTree(emptyObject);
+    const mixedObjectParsed = jsonBlobToJsonTypeTree(mixedObject);
 
-    const emptyObjectStringTree = index.typeTreeToString(emptyObjectParsed);
-    const mixedObjectStringTree = index.typeTreeToString(mixedObjectParsed);
+    const emptyObjectStringTree = typeTreeToString(emptyObjectParsed);
+    const mixedObjectStringTree = typeTreeToString(mixedObjectParsed);
 
     assert.deepStrictEqual(emptyObjectStringTree, "object { }");
     assert.deepStrictEqual(
@@ -187,12 +180,8 @@ export function testObject() {
         "object { name: string, age: number, pets: object { frodo: object { alive: boolean } } }"
     );
 
-    const emptyObjectTypescriptString = index.typeTreeToTypescript(
-        emptyObjectParsed
-    );
-    const mixedObjectTypescriptString = index.typeTreeToTypescript(
-        mixedObjectParsed
-    );
+    const emptyObjectTypescriptString = typeTreeToTypescript(emptyObjectParsed);
+    const mixedObjectTypescriptString = typeTreeToTypescript(mixedObjectParsed);
 
     assert.deepStrictEqual(emptyObjectTypescriptString, "{ }");
     assert.deepStrictEqual(
