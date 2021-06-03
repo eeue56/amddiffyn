@@ -285,6 +285,47 @@ export function typeTreeToTypescript(json: Json): string {
     }
 }
 
+export function typeTreeToAdeilad(json: Json): string {
+    switch (json.kind) {
+        case "string": {
+            return "string()";
+        }
+        case "number": {
+            return "number()";
+        }
+        case "boolean": {
+            return "bool()";
+        }
+        case "null": {
+            return "null()";
+        }
+        case "list": {
+            if (json.values.length === 0) return "array(any())";
+            const innerValues = reduceTypes(json.values).map(typeTreeToAdeilad);
+
+            if (innerValues.length > 0) {
+                return `array(oneOf([${innerValues.join(", ")}]))`;
+            }
+            return `array(${innerValues[0]})`;
+        }
+        case "object": {
+            if (Object.keys(json.pairs).length === 0) return "record()";
+
+            return (
+                "pipeline([" +
+                Object.entries(json.pairs)
+                    .map(([ key, value ]) => {
+                        return `required("${key}", ${typeTreeToAdeilad(
+                            value
+                        )})`;
+                    })
+                    .join(", ") +
+                "], SomeObject)"
+            );
+        }
+    }
+}
+
 export function jsonBlobToJsonTypeTree(json: any): Json {
     if (typeof json === "boolean") {
         return JsonBoolean(json as boolean);
@@ -307,20 +348,28 @@ export function jsonBlobToJsonTypeTree(json: any): Json {
     }
 }
 
+function isAdeilad(): boolean {
+    return process.argv.filter((arg) => arg == "--adeilad").length > 0;
+}
+
 export async function runner(): Promise<any> {
     const fileOrUrl = process.argv[process.argv.length - 1];
 
+    let asJson: any;
+
     if (fileOrUrl.startsWith("http")) {
         const response = await fetch(fileOrUrl);
-        const asJson = await response.json();
-        const asParsedJson = jsonBlobToJsonTypeTree(asJson);
-
-        console.log(typeTreeToTypescript(asParsedJson));
+        asJson = await response.json();
     } else {
         const fileContents = (await readFile(fileOrUrl)).toString("utf-8");
-        const asJson = JSON.parse(fileContents);
-        const asParsedJson = jsonBlobToJsonTypeTree(asJson);
+        asJson = JSON.parse(fileContents);
+    }
 
+    const asParsedJson = jsonBlobToJsonTypeTree(asJson);
+
+    if (isAdeilad()) {
+        console.log(typeTreeToAdeilad(asParsedJson));
+    } else {
         console.log(typeTreeToTypescript(asParsedJson));
     }
 }
