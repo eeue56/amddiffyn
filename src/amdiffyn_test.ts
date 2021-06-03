@@ -5,6 +5,13 @@ import {
     reduceTypes,
     typeTreeToString,
     typeTreeIsEqual,
+    JsonString,
+    JsonBoolean,
+    JsonNumber,
+    JsonList,
+    JsonNull,
+    JsonObject,
+    typeTreeDiff,
 } from "./amddiffyn";
 
 export function testBoolean() {
@@ -133,6 +140,28 @@ export function testList() {
     const emptyListParsed = jsonBlobToJsonTypeTree(emptyList);
     const mixedListParsed = jsonBlobToJsonTypeTree(mixedList);
 
+    assert.deepStrictEqual(
+        typeTreeIsEqual(emptyListParsed, emptyListParsed),
+        true
+    );
+
+    assert.deepStrictEqual(
+        typeTreeIsEqual(mixedListParsed, emptyListParsed),
+        false,
+        typeTreeDiff(mixedListParsed, emptyListParsed)
+    );
+
+    assert.deepStrictEqual(
+        typeTreeIsEqual(emptyListParsed, mixedListParsed),
+        false,
+        typeTreeDiff(emptyListParsed, mixedListParsed)
+    );
+
+    assert.deepStrictEqual(
+        typeTreeIsEqual(mixedListParsed, mixedListParsed),
+        true
+    );
+
     const emptyListStringTree = typeTreeToString(emptyListParsed);
     const mixedListStringTree = typeTreeToString(mixedListParsed);
 
@@ -171,6 +200,27 @@ export function testObject() {
     const emptyObjectParsed = jsonBlobToJsonTypeTree(emptyObject);
     const mixedObjectParsed = jsonBlobToJsonTypeTree(mixedObject);
 
+    assert.deepStrictEqual(
+        typeTreeIsEqual(emptyObjectParsed, emptyObjectParsed),
+        true
+    );
+
+    assert.deepStrictEqual(
+        typeTreeIsEqual(emptyObjectParsed, mixedObjectParsed),
+        false
+    );
+
+    assert.deepStrictEqual(
+        typeTreeIsEqual(mixedObjectParsed, emptyObjectParsed),
+        false
+    );
+
+    assert.deepStrictEqual(
+        typeTreeIsEqual(mixedObjectParsed, mixedObjectParsed),
+        true,
+        typeTreeDiff(mixedObjectParsed, mixedObjectParsed)
+    );
+
     const emptyObjectStringTree = typeTreeToString(emptyObjectParsed);
     const mixedObjectStringTree = typeTreeToString(mixedObjectParsed);
 
@@ -187,5 +237,61 @@ export function testObject() {
     assert.deepStrictEqual(
         mixedObjectTypescriptString,
         "{ name: string, age: number, pets: { frodo: { alive: boolean } } }"
+    );
+}
+
+export function testReduceTypes() {
+    const allUniqueTypes = [
+        JsonString("hello"),
+        JsonNumber(123),
+        JsonBoolean(true),
+        JsonNull(),
+        JsonList([ JsonString("hello") ]),
+        JsonList([ JsonNumber(123), JsonString("hello") ]),
+        JsonObject({}),
+        JsonObject({
+            name: JsonString("noah"),
+        }),
+    ];
+
+    const uniqueReducedTypes = reduceTypes(allUniqueTypes);
+
+    assert.deepStrictEqual(uniqueReducedTypes.length, allUniqueTypes.length);
+
+    const someDoubledTypes = [
+        JsonString("hello"),
+        JsonString("world"),
+
+        JsonNumber(123),
+        JsonNumber(123.123),
+
+        JsonBoolean(true),
+        JsonBoolean(false),
+
+        JsonNull(),
+        JsonNull(),
+
+        JsonList([ JsonString("hello") ]),
+        JsonList([ JsonString("world") ]),
+
+        JsonList([ JsonNumber(123), JsonString("hello") ]),
+        JsonList([ JsonNumber(123.123), JsonString("world") ]),
+
+        JsonObject({}),
+        JsonObject({}),
+
+        JsonObject({
+            name: JsonString("noah"),
+        }),
+        JsonObject({
+            name: JsonString("noah"),
+        }),
+    ];
+
+    const someDoubledReducedTypes = reduceTypes(someDoubledTypes);
+
+    assert.deepStrictEqual(
+        someDoubledReducedTypes.length,
+        someDoubledTypes.length / 2
     );
 }

@@ -81,6 +81,63 @@ export type Json =
     | JsonObject
     | JsonList;
 
+export function typeTreeDiff(first: Json, second: Json): string {
+    if (first.kind !== second.kind)
+        return `Mismatching kind: ${first.kind} !== ${second.kind}`;
+
+    switch (first.kind) {
+        case "string": {
+            return "";
+        }
+        case "number": {
+            return "";
+        }
+        case "boolean": {
+            return "";
+        }
+        case "null": {
+            return "";
+        }
+        case "list": {
+            second = second as JsonList;
+
+            const firstValuesTypes = reduceTypes(first.values);
+            const secondValueTypes = reduceTypes(second.values);
+
+            if (firstValuesTypes.length !== secondValueTypes.length)
+                return "Different length of types in list";
+
+            const innerValues = firstValuesTypes.map((value, index) => {
+                return typeTreeDiff(value, secondValueTypes[index]);
+            });
+
+            return innerValues.filter((x) => x).join("\n");
+        }
+        case "object": {
+            second = second as JsonObject;
+
+            if (
+                Object.keys(first.pairs).length !==
+                Object.keys(second.pairs).length
+            ) {
+                return "Mismatching pairs length";
+            }
+
+            const secondKeys = Object.keys(second.pairs);
+
+            const innerValues = Object.keys(first.pairs).map((key) => {
+                if (secondKeys.indexOf(key) === -1) return "";
+                return typeTreeDiff(
+                    first.pairs[key],
+                    (second as JsonObject).pairs[key]
+                );
+            });
+
+            return innerValues.filter((x) => x).join("\n");
+        }
+    }
+}
+
 export function typeTreeIsEqual(first: Json, second: Json): boolean {
     if (first.kind !== second.kind) return false;
 
@@ -100,35 +157,39 @@ export function typeTreeIsEqual(first: Json, second: Json): boolean {
         case "list": {
             second = second as JsonList;
 
-            if (first.values.length !== second.values.length) return false;
+            const firstValuesTypes = reduceTypes(first.values);
+            const secondValueTypes = reduceTypes(second.values);
 
-            const innerValues = first.values.map((value, index) => {
-                return typeTreeIsEqual(
-                    value,
-                    (second as JsonList).values[index]
-                );
+            if (firstValuesTypes.length !== secondValueTypes.length)
+                return false;
+
+            const innerValues = firstValuesTypes.map((value, index) => {
+                return typeTreeIsEqual(value, secondValueTypes[index]);
             });
 
-            return innerValues.filter((x) => x).length === 0;
+            return innerValues.filter((x) => !x).length === 0;
         }
         case "object": {
             second = second as JsonObject;
+
             if (
                 Object.keys(first.pairs).length !==
                 Object.keys(second.pairs).length
-            )
+            ) {
                 return false;
-            if (Object.keys(first.pairs) !== Object.keys(second.pairs))
-                return false;
+            }
+
+            const secondKeys = Object.keys(second.pairs);
 
             const innerValues = Object.keys(first.pairs).map((key) => {
+                if (secondKeys.indexOf(key) === -1) return false;
                 return typeTreeIsEqual(
                     first.pairs[key],
                     (second as JsonObject).pairs[key]
                 );
             });
 
-            return innerValues.filter((x) => x).length === 0;
+            return innerValues.filter((x) => !x).length === 0;
         }
     }
 }
