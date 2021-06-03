@@ -24,6 +24,12 @@ With a url:
 npx @eeue56/amddiffyn https://example.com/user.json
 ```
 
+You can also use it to generate types for [adeilad](https://github.com/eeue56/adeilad) via the `--adeilad` flag:
+
+```
+npx @eeue56/amddiffyn --adeilad https://example.com/user.json
+```
+
 ## Name
 
 Amddiffyn means defend. An English speaker may pronounce it as "am-ffith-in".
