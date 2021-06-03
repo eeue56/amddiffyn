@@ -3,77 +3,77 @@
 import { readFile } from "fs/promises";
 import fetch from "node-fetch";
 
-type JsonString = {
+export type JsonString = {
     kind: "string";
     value: string;
 };
 
-function JsonString(value: string): JsonString {
+export function JsonString(value: string): JsonString {
     return {
         kind: "string",
         value: value,
     };
 }
 
-type JsonNumber = {
+export type JsonNumber = {
     kind: "number";
     value: number;
 };
 
-function JsonNumber(value: number): JsonNumber {
+export function JsonNumber(value: number): JsonNumber {
     return {
         kind: "number",
         value: value,
     };
 }
 
-type JsonBoolean = {
+export type JsonBoolean = {
     kind: "boolean";
     value: boolean;
 };
 
-function JsonBoolean(value: boolean): JsonBoolean {
+export function JsonBoolean(value: boolean): JsonBoolean {
     return {
         kind: "boolean",
         value: value,
     };
 }
 
-type JsonNull = {
+export type JsonNull = {
     kind: "null";
 };
 
-function JsonNull(): JsonNull {
+export function JsonNull(): JsonNull {
     return {
         kind: "null",
     };
 }
 
-type JsonList = {
+export type JsonList = {
     kind: "list";
     values: Json[];
 };
 
-function JsonList(values: Json[]): JsonList {
+export function JsonList(values: Json[]): JsonList {
     return {
         kind: "list",
         values: values,
     };
 }
 
-type JsonObject = {
+export type JsonObject = {
     kind: "object";
     pairs: Record<string, Json>;
 };
 
-function JsonObject(pairs: Record<string, Json>): JsonObject {
+export function JsonObject(pairs: Record<string, Json>): JsonObject {
     return {
         kind: "object",
         pairs: pairs,
     };
 }
 
-type Json =
+export type Json =
     | JsonString
     | JsonNumber
     | JsonBoolean
@@ -173,7 +173,7 @@ export function typeTreeToString(json: Json): string {
     }
 }
 
-function reduceTypes(types: Json[]): Json[] {
+export function reduceTypes(types: Json[]): Json[] {
     return types.reduce((previousValue: Json[], currentValue: Json): Json[] => {
         if (
             previousValue
