@@ -27,6 +27,7 @@
     },
     "homepage": "https://github.com/eeue56/amddiffyn#readme",
     "dependencies": {
+        "@eeue56/baner": "^0.0.1",
         "node-fetch": "^2.6.1"
     },
     "devDependencies": {

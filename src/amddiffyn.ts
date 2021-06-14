@@ -1,5 +1,6 @@
 #!/usr/bin/env ts-node
 
+import { bothFlag, empty, help, longFlag, parse, parser } from "@eeue56/baner";
 import { readFile } from "fs/promises";
 import fetch from "node-fetch";
 
@@ -348,12 +349,26 @@ export function jsonBlobToJsonTypeTree(json: any): Json {
     }
 }
 
-function isAdeilad(): boolean {
-    return process.argv.filter((arg) => arg == "--adeilad").length > 0;
-}
-
 export async function runner(): Promise<any> {
-    const fileOrUrl = process.argv[process.argv.length - 1];
+    const flagParser = parser([
+        longFlag(
+            "adeilad",
+            "If present, generate an adeilad definition",
+            empty()
+        ),
+        bothFlag("h", "help", "This help text", empty()),
+    ]);
+    const program = parse(flagParser, process.argv);
+
+    if (program.flags["h/help"].isPresent) {
+        console.log(help(flagParser));
+        console.log(
+            "Provide either a url starting with http/https, or a file path"
+        );
+        return;
+    }
+
+    const fileOrUrl = program.args[program.args.length - 1];
 
     let asJson: any;
 
@@ -367,7 +382,7 @@ export async function runner(): Promise<any> {
 
     const asParsedJson = jsonBlobToJsonTypeTree(asJson);
 
-    if (isAdeilad()) {
+    if (program.flags.adeilad.isPresent) {
         console.log(typeTreeToAdeilad(asParsedJson));
     } else {
         console.log(typeTreeToTypescript(asParsedJson));
