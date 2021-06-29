@@ -196,9 +196,27 @@ export function testObject() {
             },
         },
     };
+    const mixedObjectWithInvalidChars: {
+        name: string;
+        age: number;
+        pets: { frodo: { alive: boolean } };
+        "@id": number;
+    } = {
+        name: "noah",
+        age: 28,
+        pets: {
+            frodo: {
+                alive: false,
+            },
+        },
+        "@id": 12,
+    };
 
     const emptyObjectParsed = jsonBlobToJsonTypeTree(emptyObject);
     const mixedObjectParsed = jsonBlobToJsonTypeTree(mixedObject);
+    const mixedObjectWithInvalidCharsParsed = jsonBlobToJsonTypeTree(
+        mixedObjectWithInvalidChars
+    );
 
     assert.deepStrictEqual(
         typeTreeIsEqual(emptyObjectParsed, emptyObjectParsed),
@@ -221,8 +239,23 @@ export function testObject() {
         typeTreeDiff(mixedObjectParsed, mixedObjectParsed)
     );
 
+    assert.deepStrictEqual(
+        typeTreeIsEqual(
+            mixedObjectWithInvalidCharsParsed,
+            mixedObjectWithInvalidCharsParsed
+        ),
+        true,
+        typeTreeDiff(
+            mixedObjectWithInvalidCharsParsed,
+            mixedObjectWithInvalidCharsParsed
+        )
+    );
+
     const emptyObjectStringTree = typeTreeToString(emptyObjectParsed);
     const mixedObjectStringTree = typeTreeToString(mixedObjectParsed);
+    const mixedObjectWithInvalidCharsStringTree = typeTreeToString(
+        mixedObjectWithInvalidCharsParsed
+    );
 
     assert.deepStrictEqual(emptyObjectStringTree, "object { }");
     assert.deepStrictEqual(
@@ -232,11 +265,18 @@ export function testObject() {
 
     const emptyObjectTypescriptString = typeTreeToTypescript(emptyObjectParsed);
     const mixedObjectTypescriptString = typeTreeToTypescript(mixedObjectParsed);
+    const mixedObjectWithInvalidCharsTypescriptString = typeTreeToTypescript(
+        mixedObjectWithInvalidCharsParsed
+    );
 
     assert.deepStrictEqual(emptyObjectTypescriptString, "{ }");
     assert.deepStrictEqual(
         mixedObjectTypescriptString,
         "{ name: string, age: number, pets: { frodo: { alive: boolean } } }"
+    );
+    assert.deepStrictEqual(
+        mixedObjectWithInvalidCharsTypescriptString,
+        '{ name: string, age: number, pets: { frodo: { alive: boolean } }, "@id": number }'
     );
 }
 

@@ -1,6 +1,14 @@
 #!/usr/bin/env ts-node
 
-import { bothFlag, empty, help, longFlag, parse, parser } from "@eeue56/baner";
+import {
+    bothFlag,
+    empty,
+    help,
+    longFlag,
+    number,
+    parse,
+    parser,
+} from "@eeue56/baner";
 import { readFile } from "fs/promises";
 import fetch from "node-fetch";
 
@@ -249,6 +257,14 @@ export function reduceTypes(types: Json[]): Json[] {
     }, [ ]);
 }
 
+function containsInvalidChar(key: string): boolean {
+    return (
+        [ "@", "<", ">", " ", ".", ",", "!" ].filter((char) =>
+            key.indexOf(char)
+        ).length === 0
+    );
+}
+
 export function typeTreeToTypescript(json: Json): string {
     switch (json.kind) {
         case "string": {
@@ -276,7 +292,10 @@ export function typeTreeToTypescript(json: Json): string {
             return (
                 "{ " +
                 Object.entries(json.pairs)
-                    .map(([ key, value ]) => {
+                    .map(([ rawKey, value ]) => {
+                        const key = containsInvalidChar(rawKey)
+                            ? `"${rawKey}"`
+                            : rawKey;
                         return key + ": " + typeTreeToTypescript(value);
                     })
                     .join(", ") +
