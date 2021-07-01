@@ -257,11 +257,41 @@ export function reduceTypes(types: Json[]): Json[] {
     }, [ ]);
 }
 
+export function generalizeTypes(json: Json): Json {
+    switch (json.kind) {
+        // already as generalized as possible
+        case "string":
+        case "number":
+        case "boolean":
+        case "null":
+            return json;
+
+        // we need to diff items in the list to get the general idea
+        case "list": {
+            if (json.values.length === 0) return json;
+            const innerValues = reduceTypes(json.values);
+            if (innerValues.length === 1) return JsonList(innerValues);
+            return json;
+        }
+        case "object": {
+            if (Object.keys(json.pairs).length === 0) return json;
+
+            const returnObject: Record<string, Json> = {};
+
+            Object.entries(json.pairs).forEach(([ key, value ]) => {
+                returnObject[key] = generalizeTypes(value);
+            });
+
+            return JsonObject(returnObject);
+        }
+    }
+}
+
 function containsInvalidChar(key: string): boolean {
     return (
-        [ "@", "<", ">", " ", ".", ",", "!" ].filter((char) =>
-            key.indexOf(char)
-        ).length === 0
+        [ "@", "<", ">", " ", ".", ",", "!" ].filter(
+            (char) => key.indexOf(char) > -1
+        ).length > 0
     );
 }
 
