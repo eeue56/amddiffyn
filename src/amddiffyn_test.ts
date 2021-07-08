@@ -12,6 +12,13 @@ import {
     JsonNull,
     JsonObject,
     typeTreeDiff,
+    astTypeTreeDiff,
+    Same,
+    Replace,
+    Multiple,
+    Insert,
+    Remove,
+    Json,
 } from "./amddiffyn";
 
 export function testBoolean() {
@@ -333,5 +340,125 @@ export function testReduceTypes() {
     assert.deepStrictEqual(
         someDoubledReducedTypes.length,
         someDoubledTypes.length / 2
+    );
+}
+
+export function testAstTypeDiffUniqueTypes() {
+    const allUniqueTypes = [
+        JsonString("hello"),
+        JsonNumber(123),
+        JsonBoolean(true),
+        JsonNull(),
+        JsonList([ JsonString("hello") ]),
+        JsonObject({
+            name: JsonString("noah"),
+        }),
+    ];
+
+    allUniqueTypes.forEach((uniqueType) => {
+        assert.deepStrictEqual(astTypeTreeDiff(uniqueType, uniqueType), Same());
+    });
+
+    allUniqueTypes.forEach((uniqueType, i) => {
+        allUniqueTypes.forEach((secondUniqueType, j) => {
+            if (i === j) return;
+
+            assert.deepStrictEqual(
+                astTypeTreeDiff(uniqueType, secondUniqueType).kind,
+                "Replace"
+            );
+        });
+    });
+}
+
+export function testAstTypeDiffObjects() {
+    assert.deepStrictEqual(
+        astTypeTreeDiff(
+            JsonObject({
+                name: JsonString("noah"),
+            }),
+            JsonObject({
+                age: JsonNumber(123),
+            })
+        ),
+        Multiple([
+            Remove("name", JsonString("noah")),
+            Insert("age", JsonNumber(123)),
+        ])
+    );
+
+    assert.deepStrictEqual(
+        astTypeTreeDiff(
+            JsonObject({
+                name: JsonString("noah"),
+            }),
+            JsonNumber(123)
+        ),
+        Replace(0, JsonObject({ name: JsonString("noah") }), JsonNumber(123))
+    );
+
+    assert.deepStrictEqual(
+        astTypeTreeDiff(
+            JsonObject({
+                pets: JsonList([ JsonString("Frodo") ]),
+            }),
+            JsonObject({
+                pets: JsonNumber(123),
+            })
+        ),
+        Multiple([
+            Replace("pets", JsonList([ JsonString("Frodo") ]), JsonNumber(123)),
+        ])
+    );
+}
+
+export function testAstTypeDiffNestedObjects() {
+    assert.deepStrictEqual(
+        astTypeTreeDiff(
+            JsonObject({
+                pets: JsonList([ JsonObject({ age: JsonNumber(123) }) ]),
+            }),
+            JsonObject({
+                pets: JsonList([ JsonObject({ name: JsonString("Frodo") }) ]),
+            })
+        ),
+        Multiple([
+            Replace(
+                "pets",
+                JsonList([ JsonObject({ age: JsonNumber(123) }) ]),
+                JsonList([ JsonObject({ name: JsonString("Frodo") }) ])
+            ),
+        ])
+    );
+}
+
+export function testAstTypeDiffComplexNestedObjects() {
+    assert.deepStrictEqual(
+        astTypeTreeDiff(
+            JsonObject({
+                person: JsonObject({
+                    name: JsonString("Noah"),
+                }),
+                pets: JsonList([ JsonObject({ age: JsonNumber(123) }) ]),
+            }),
+            JsonObject({
+                pets: JsonList([ JsonObject({ name: JsonString("Frodo") }) ]),
+                mountain: JsonString("Du"),
+            })
+        ),
+        Multiple([
+            Remove(
+                "person",
+                JsonObject({
+                    name: JsonString("Noah"),
+                })
+            ),
+            Replace(
+                "pets",
+                JsonList([ JsonObject({ age: JsonNumber(123) }) ]),
+                JsonList([ JsonObject({ name: JsonString("Frodo") }) ])
+            ),
+            Insert("mountain", JsonString("Du")),
+        ])
     );
 }

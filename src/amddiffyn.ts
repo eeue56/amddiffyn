@@ -90,6 +90,183 @@ export type Json =
     | JsonObject
     | JsonList;
 
+type Key = string | number;
+
+type Same = {
+    kind: "Same";
+};
+
+export function Same(): Same {
+    return {
+        kind: "Same",
+    };
+}
+
+type Insert = {
+    kind: "Insert";
+    key: Key;
+    json: Json;
+};
+
+export function Insert(key: Key, json: Json): Insert {
+    return {
+        kind: "Insert",
+        key,
+        json,
+    };
+}
+
+type Replace = {
+    kind: "Replace";
+    key: Key;
+    insert: Json;
+    remove: Json;
+};
+
+export function Replace(key: Key, insert: Json, remove: Json): Replace {
+    return {
+        kind: "Replace",
+        key,
+        insert,
+        remove,
+    };
+}
+
+type Remove = {
+    kind: "Remove";
+    json: Json;
+    key: Key;
+};
+
+export function Remove(key: Key, json: Json): Remove {
+    return {
+        kind: "Remove",
+        key,
+        json,
+    };
+}
+
+type Multiple = {
+    kind: "Multiple";
+    diffs: Diff[];
+};
+
+export function Multiple(diffs: Diff[]): Multiple {
+    return {
+        kind: "Multiple",
+        diffs,
+    };
+}
+
+type Diff = Same | Insert | Replace | Remove | Multiple;
+
+export function astTypeTreeDiff(first: Json, second: Json): Diff {
+    if (first.kind !== second.kind) return Replace(0, first, second);
+
+    switch (first.kind) {
+        case "string":
+        case "number":
+        case "boolean":
+        case "null": {
+            return Same();
+        }
+
+        case "list": {
+            second = second as JsonList;
+
+            const firstValueTypes = reduceTypes(first.values);
+            const secondValueTypes = reduceTypes(second.values);
+
+            const differences: Diff[] = [ ];
+
+            firstValueTypes.forEach((value, index) => {
+                const isInSecondValues = secondValueTypes
+                    .map((secondValue) => astTypeTreeDiff(value, secondValue))
+                    .filter((diff) => diff.kind === "Same");
+
+                if (isInSecondValues.length === 0) {
+                    differences.push(Remove(index, value));
+                }
+            });
+
+            secondValueTypes.forEach((secondValue, index) => {
+                const isInFirstValues = firstValueTypes
+                    .map((value) => astTypeTreeDiff(secondValue, value))
+                    .filter((diff) => diff.kind === "Same");
+
+                if (isInFirstValues.length === 0) {
+                    differences.push(Insert(index, secondValue));
+                }
+            });
+
+            if (differences.length === 0) return Same();
+            return Multiple(differences);
+        }
+        case "object": {
+            second = second as JsonObject;
+
+            const differences: Diff[] = [ ];
+
+            const firstKeys = Object.keys(first.pairs);
+            const secondKeys = Object.keys(second.pairs);
+
+            firstKeys.forEach((key: string) => {
+                if (secondKeys.indexOf(key) === -1) {
+                    differences.push(Remove(key, first.pairs[key]));
+                    return;
+                }
+
+                const diffed = astTypeTreeDiff(
+                    first.pairs[key],
+                    (second as JsonObject).pairs[key]
+                );
+
+                if (diffed.kind !== "Same") {
+                    differences.push(
+                        Replace(
+                            key,
+                            first.pairs[key],
+                            (second as JsonObject).pairs[key]
+                        )
+                    );
+                }
+            });
+
+            secondKeys.forEach((key: string) => {
+                if (firstKeys.indexOf(key) === -1)
+                    differences.push(
+                        Insert(key, (second as JsonObject).pairs[key])
+                    );
+            });
+
+            if (differences.length === 0) return Same();
+            return Multiple(differences);
+        }
+    }
+}
+
+export function astTypeTreeDiffToString(diff: Diff): string {
+    switch (diff.kind) {
+        case "Replace": {
+            return `Mismatching kind: ${diff.remove.kind} !== ${diff.insert.kind}`;
+        }
+        case "Same": {
+            return "";
+        }
+        case "Insert": {
+            return `Add item: ${diff.key}`;
+        }
+        case "Remove": {
+            return `Remove item: ${diff.key}`;
+        }
+        case "Multiple": {
+            return `Multiple: ${diff.diffs
+                .map(astTypeTreeDiffToString)
+                .join(",")}`;
+        }
+    }
+}
+
 export function typeTreeDiff(first: Json, second: Json): string {
     if (first.kind !== second.kind)
         return `Mismatching kind: ${first.kind} !== ${second.kind}`;
@@ -110,13 +287,13 @@ export function typeTreeDiff(first: Json, second: Json): string {
         case "list": {
             second = second as JsonList;
 
-            const firstValuesTypes = reduceTypes(first.values);
+            const firstValueTypes = reduceTypes(first.values);
             const secondValueTypes = reduceTypes(second.values);
 
-            if (firstValuesTypes.length !== secondValueTypes.length)
+            if (firstValueTypes.length !== secondValueTypes.length)
                 return "Different length of types in list";
 
-            const innerValues = firstValuesTypes.map((value, index) => {
+            const innerValues = firstValueTypes.map((value, index) => {
                 return typeTreeDiff(value, secondValueTypes[index]);
             });
 
@@ -166,13 +343,13 @@ export function typeTreeIsEqual(first: Json, second: Json): boolean {
         case "list": {
             second = second as JsonList;
 
-            const firstValuesTypes = reduceTypes(first.values);
+            const firstValueTypes = reduceTypes(first.values);
             const secondValueTypes = reduceTypes(second.values);
 
-            if (firstValuesTypes.length !== secondValueTypes.length)
+            if (firstValueTypes.length !== secondValueTypes.length)
                 return false;
 
-            const innerValues = firstValuesTypes.map((value, index) => {
+            const innerValues = firstValueTypes.map((value, index) => {
                 return typeTreeIsEqual(value, secondValueTypes[index]);
             });
 
