@@ -11,6 +11,8 @@ import {
 } from "@eeue56/baner";
 import { readFile } from "fs/promises";
 import fetch from "node-fetch";
+import readline from "readline";
+import JSON5 from "json5";
 
 export type JsonString = {
     kind: "string";
@@ -582,6 +584,7 @@ export async function runner(): Promise<any> {
             "If present, generate an adeilad definition",
             empty()
         ),
+        longFlag("stdin", "Read input from stdin", empty()),
         bothFlag("h", "help", "This help text", empty()),
     ]);
     const program = parse(flagParser, process.argv);
@@ -594,16 +597,29 @@ export async function runner(): Promise<any> {
         return;
     }
 
-    const fileOrUrl = program.args[program.args.length - 1];
-
     let asJson: any;
 
-    if (fileOrUrl.startsWith("http")) {
-        const response = await fetch(fileOrUrl);
-        asJson = await response.json();
+    if (program.flags.stdin.isPresent) {
+        const rl = readline.createInterface({
+            input: process.stdin,
+        });
+
+        const lines = [ ];
+        for await (const line of rl) {
+            lines.push(line);
+        }
+
+        console.log(lines.join("\n"));
+        asJson = JSON5.parse(lines.join("\n"));
     } else {
-        const fileContents = (await readFile(fileOrUrl)).toString("utf-8");
-        asJson = JSON.parse(fileContents);
+        const fileOrUrl = program.args[program.args.length - 1];
+        if (fileOrUrl.startsWith("http")) {
+            const response = await fetch(fileOrUrl);
+            asJson = await response.json();
+        } else {
+            const fileContents = (await readFile(fileOrUrl)).toString("utf-8");
+            asJson = JSON5.parse(fileContents);
+        }
     }
 
     const asParsedJson = jsonBlobToJsonTypeTree(asJson);
