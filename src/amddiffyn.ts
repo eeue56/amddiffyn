@@ -14,6 +14,8 @@ import fetch from "node-fetch";
 import readline from "readline";
 import JSON5 from "json5";
 
+// JSON types
+
 export type JsonString = {
     kind: "string";
     value: string;
@@ -92,15 +94,19 @@ export type Json =
     | JsonObject
     | JsonList;
 
+// Diffing types
+
 type Key = string | number;
 
 type Same = {
     kind: "Same";
+    json: Json;
 };
 
-export function Same(): Same {
+export function Same(json: Json): Same {
     return {
         kind: "Same",
+        json,
     };
 }
 
@@ -170,11 +176,17 @@ export function astTypeTreeDiff(first: Json, second: Json): Diff {
         case "number":
         case "boolean":
         case "null": {
-            return Same();
+            return Same(first);
         }
 
         case "list": {
             second = second as JsonList;
+
+            if (first.values.length === 0 && second.values.length > 0)
+                return Multiple(second.values.map((val, i) => Insert(i, val)));
+
+            if (second.values.length === 0 && first.values.length > 0)
+                return Multiple(first.values.map((val, i) => Remove(i, val)));
 
             const firstValueTypes = reduceTypes(first.values);
             const secondValueTypes = reduceTypes(second.values);
@@ -201,7 +213,7 @@ export function astTypeTreeDiff(first: Json, second: Json): Diff {
                 }
             });
 
-            if (differences.length === 0) return Same();
+            if (differences.length === 0) return Same(first);
             return Multiple(differences);
         }
         case "object": {
@@ -235,13 +247,13 @@ export function astTypeTreeDiff(first: Json, second: Json): Diff {
             });
 
             secondKeys.forEach((key: string) => {
-                if (firstKeys.indexOf(key) === -1)
-                    differences.push(
-                        Insert(key, (second as JsonObject).pairs[key])
-                    );
+                if (firstKeys.indexOf(key) > -1) return;
+                differences.push(
+                    Insert(key, (second as JsonObject).pairs[key])
+                );
             });
 
-            if (differences.length === 0) return Same();
+            if (differences.length === 0) return Same(first);
             return Multiple(differences);
         }
     }
@@ -289,6 +301,12 @@ export function typeTreeDiff(first: Json, second: Json): string {
         case "list": {
             second = second as JsonList;
 
+            if (
+                (first.values.length === 0 && second.values.length > 0) ||
+                (second.values.length === 0 && first.values.length > 0)
+            )
+                return "Different length of types in list";
+
             const firstValueTypes = reduceTypes(first.values);
             const secondValueTypes = reduceTypes(second.values);
 
@@ -324,6 +342,10 @@ export function typeTreeDiff(first: Json, second: Json): string {
             return innerValues.filter((x) => x).join("\n");
         }
     }
+}
+
+export function astTypeTreeIsEqual(first: Json, second: Json): boolean {
+    return astTypeTreeDiff(first, second).kind === "Same";
 }
 
 export function typeTreeIsEqual(first: Json, second: Json): boolean {
@@ -436,34 +458,31 @@ export function reduceTypes(types: Json[]): Json[] {
     }, [ ]);
 }
 
-export function generalizeTypes(json: Json): Json {
-    switch (json.kind) {
-        // already as generalized as possible
-        case "string":
-        case "number":
-        case "boolean":
-        case "null":
-            return json;
-
-        // we need to diff items in the list to get the general idea
-        case "list": {
-            if (json.values.length === 0) return json;
-            const innerValues = reduceTypes(json.values);
-            if (innerValues.length === 1) return JsonList(innerValues);
-            return json;
+function astGeneralizeTypes(diff: Diff): Json {
+    switch (diff.kind) {
+        case "Same":
+            return diff.json;
+        case "Insert":
+            return diff.json;
+        case "Remove":
+            return diff.json;
+        case "Replace": {
+            return JsonList([ diff.insert, diff.remove ]);
         }
-        case "object": {
-            if (Object.keys(json.pairs).length === 0) return json;
-
-            const returnObject: Record<string, Json> = {};
-
-            Object.entries(json.pairs).forEach(([ key, value ]) => {
-                returnObject[key] = generalizeTypes(value);
-            });
-
-            return JsonObject(returnObject);
+        case "Multiple": {
+            return JsonList(
+                diff.diffs.map((innerDiff) => astGeneralizeTypes(innerDiff))
+            );
         }
     }
+}
+
+/* Takes two json type trees and returns a generalized version that will match both first and second
+ */
+export function generalizeTypes(first: Json, second: Json): Json {
+    const diff = astTypeTreeDiff(first, second);
+
+    return astGeneralizeTypes(diff);
 }
 
 function containsInvalidChar(key: string): boolean {

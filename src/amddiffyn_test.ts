@@ -356,7 +356,10 @@ export function testAstTypeDiffUniqueTypes() {
     ];
 
     allUniqueTypes.forEach((uniqueType) => {
-        assert.deepStrictEqual(astTypeTreeDiff(uniqueType, uniqueType), Same());
+        assert.deepStrictEqual(
+            astTypeTreeDiff(uniqueType, uniqueType),
+            Same(uniqueType)
+        );
     });
 
     allUniqueTypes.forEach((uniqueType, i) => {

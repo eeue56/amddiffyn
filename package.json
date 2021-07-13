@@ -6,6 +6,7 @@
     "scripts": {
         "build": "tsc -p tsconfig.json",
         "test": "npx @eeue56/bach",
+        "bench": "npx @eeue56/mainc",
         "format": "npx prettier --write ."
     },
     "bin": {
@@ -33,6 +34,7 @@
     },
     "devDependencies": {
         "@eeue56/bach": "^0.0.3",
+        "@eeue56/mainc": "^0.0.5",
         "@types/node": "^15.6.1",
         "@types/node-fetch": "^2.5.10",
         "prettier": "github:eeue56/prettier#feat/spacing-around-square-brackets",
