@@ -1,0 +1,6 @@
+examples/
+node_modules/
+src/amddiffyn_bench.ts
+src/amddiffyn_test.ts
+build/amddiffyn_bench.js
+build/amddiffyn_test.js
